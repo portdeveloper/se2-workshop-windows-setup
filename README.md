@@ -133,3 +133,32 @@ VS Code launches with the project mounted inside WSL — full IntelliSense, term
 **Files feel slow** — keep your project under `~/` inside WSL (e.g. `/home/you/my-dapp`), **not** under `/mnt/c/...`. Cross-filesystem I/O is the #1 WSL performance pitfall.
 
 **Out of disk space** — WSL stores its virtual disk under `%USERPROFILE%\AppData\Local\Packages\...`. Free up space on `C:` or move the WSL distro with `wsl --export` / `wsl --import`.
+
+---
+
+## For workshop hosts: testing the flow end-to-end
+
+Before the workshop, validate the whole attendee flow with **one command**:
+
+```bash
+make test-e2e
+```
+
+This spins up a clean Ubuntu 24.04 container and runs every step an attendee runs after WSL2 is up:
+
+| Step | Action |
+| ---- | ------ |
+| 1    | `bash wsl-bootstrap.sh` — installs Node LTS, Yarn, Foundry, GitHub CLI |
+| 2    | `bash verify.sh --ci` — confirms toolchain + network reachability |
+| 3    | Configures `git user.name` / `user.email` (create-eth requires these) |
+| 4    | `npx create-eth@latest my-monad-dapp -e portdeveloper/se2-monad-extension --solidity-framework foundry --skip-install` |
+| 5    | `yarn install` |
+| 6    | Greps the generated `foundry.toml`, `scaffold.config.ts`, and `utils/monadTestnet.ts` to confirm Monad wiring landed |
+| 7    | `yarn compile` — Forge build |
+| 8    | `yarn chain` (background) + `yarn deploy` — verifies contracts deploy to a local Anvil and `deployedContracts.ts` is regenerated with a real address |
+
+**Runtime:** ~8 min on a fast connection. Requires Docker (`sudo apt install docker.io` on Ubuntu).
+
+If `make test-e2e` passes, every command in Steps 1–6 of the attendee README is known-working — including the create-eth extension, the Monad RPC config, and the Forge deploy. If it fails, the failing step is the same step an attendee would have failed on.
+
+The fast feedback loop is `make lint` (instant) → `make test-container` (~3 min, runs the bootstrap + verify only) → `make test-e2e` (full flow, slower). All three also run on GitHub Actions for every push.

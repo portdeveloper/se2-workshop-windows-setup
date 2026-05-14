@@ -19,8 +19,11 @@ fi
 # --- System packages -------------------------------------------------------
 echo "==> Installing apt packages (sudo password may be requested)"
 sudo apt-get update -y
+# python3 is needed by node-gyp at install time (e.g. bufferutil, utf-8-validate
+# native addons pulled in transitively by ws). Without it, yarn install fails
+# part-way through the link step.
 sudo apt-get install -y --no-install-recommends \
-  build-essential curl git unzip ca-certificates jq
+  build-essential curl git unzip ca-certificates jq python3
 
 # --- nvm + Node LTS --------------------------------------------------------
 if [[ ! -s "$HOME/.nvm/nvm.sh" ]]; then

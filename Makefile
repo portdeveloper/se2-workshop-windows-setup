@@ -1,12 +1,13 @@
 REPO_ROOT    := $(CURDIR)
 DOCKER_IMAGE := se2-workshop-test
 
-.PHONY: help lint lint-bash lint-powershell test-container test clean
+.PHONY: help lint lint-bash lint-powershell test-container test-e2e test clean
 
 help:
 	@echo "Targets:"
 	@echo "  make lint            shellcheck + PSScriptAnalyzer (Layer 1)"
 	@echo "  make test-container  run wsl-bootstrap.sh + verify.sh --ci in a clean Ubuntu container (Layer 2)"
+	@echo "  make test-e2e        full attendee flow: bootstrap + scaffold (extension) + install + compile + local deploy"
 	@echo "  make test            lint + test-container"
 	@echo "  make clean           remove the test container image"
 
@@ -25,6 +26,12 @@ test-container:
 	docker build -t $(DOCKER_IMAGE) test/
 	docker run --rm -v "$(REPO_ROOT):/work:ro" -w /work $(DOCKER_IMAGE) \
 		bash -c "bash ./wsl-bootstrap.sh && bash ./verify.sh --ci"
+
+test-e2e:
+	@command -v docker >/dev/null 2>&1 || { echo "docker not installed" >&2; exit 1; }
+	docker build -t $(DOCKER_IMAGE) test/
+	docker run --rm -v "$(REPO_ROOT):/work:ro" $(DOCKER_IMAGE) \
+		bash /work/test/e2e.sh
 
 test: lint test-container
 
