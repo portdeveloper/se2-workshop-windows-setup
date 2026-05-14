@@ -18,7 +18,7 @@ lint-bash:
 
 lint-powershell:
 	@command -v pwsh >/dev/null 2>&1 || { echo "pwsh not installed; skipping .ps1 lint" >&2; exit 0; }
-	pwsh -NoProfile -Command "if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) { Install-Module PSScriptAnalyzer -Scope CurrentUser -Force }; \$$r = Invoke-ScriptAnalyzer -Path windows-bootstrap.ps1 -Severity Warning,Error; \$$r | Format-Table; if (\$$r) { exit 1 }"
+	pwsh -NoProfile -Command "if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) { Install-Module PSScriptAnalyzer -Scope CurrentUser -Force }; \$$r = Invoke-ScriptAnalyzer -Path windows-bootstrap.ps1 -Severity Warning,Error -ExcludeRule PSAvoidUsingWriteHost; \$$r | Format-Table; if (\$$r) { exit 1 }"
 
 test-container:
 	@command -v docker >/dev/null 2>&1 || { echo "docker not installed" >&2; exit 1; }

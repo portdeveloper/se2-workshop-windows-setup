@@ -25,7 +25,11 @@ jobs:
         shell: pwsh
         run: |
           Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
-          $results = Invoke-ScriptAnalyzer -Path windows-bootstrap.ps1 -Severity Warning,Error
+          # PSAvoidUsingWriteHost is excluded: this script is a user-facing
+          # bootstrap where coloured console output is desired.
+          $results = Invoke-ScriptAnalyzer -Path windows-bootstrap.ps1 `
+            -Severity Warning,Error `
+            -ExcludeRule PSAvoidUsingWriteHost
           $results | Format-Table
           if ($results) { exit 1 }
 
