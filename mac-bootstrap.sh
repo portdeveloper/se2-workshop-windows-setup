@@ -1,37 +1,34 @@
 #!/usr/bin/env bash
-# Bootstraps Ubuntu (inside WSL2) with the toolchain for a Scaffold-ETH 2
-# Foundry workshop. Safe to re-run.
+# Bootstraps macOS for a Scaffold-ETH 2 (Foundry) + Monad workshop.
+# Mirrors wsl-bootstrap.sh: install nvm + Node LTS + Yarn + Foundry, verify,
+# prompt for git identity, scaffold the project.
+#
+# Safe to re-run.
 set -euo pipefail
 
 echo ""
-echo "==> Scaffold-ETH 2 Workshop: WSL/Ubuntu bootstrap"
+echo "==> Scaffold-ETH 2 Workshop: macOS bootstrap"
 echo ""
 
-if [[ "$(uname -s)" != "Linux" ]]; then
-  echo "ERROR: run this inside WSL/Ubuntu, not on Windows." >&2
+if [[ "$(uname -s)" != "Darwin" ]]; then
+  echo "ERROR: this is the macOS bootstrap. On Linux/WSL, use wsl-bootstrap.sh." >&2
   exit 1
 fi
 
-if ! grep -qi microsoft /proc/version 2>/dev/null; then
-  echo "Note: this doesn't look like WSL. Continuing anyway. The script works on any Ubuntu."
-fi
-
-# Non-interactive mode for CI / Docker tests: skip /dev/tty prompts and use
-# env defaults. Attendees run this normally and get prompted.
 NON_INTERACTIVE="${WORKSHOP_NONINTERACTIVE:-0}"
 DEFAULT_GIT_NAME="${WORKSHOP_GIT_NAME:-workshop}"
 DEFAULT_GIT_EMAIL="${WORKSHOP_GIT_EMAIL:-workshop@example.com}"
 DEFAULT_PROJECT_NAME="${WORKSHOP_PROJECT_NAME:-my-monad-dapp}"
 EXTENSION="${WORKSHOP_EXTENSION:-portdeveloper/se2-monad-extension}"
 
-# --- System packages -------------------------------------------------------
-echo "==> Installing apt packages (sudo password may be requested)"
-sudo apt-get update -y
-# python3 is needed by node-gyp at install time (e.g. bufferutil, utf-8-validate
-# native addons pulled in transitively by ws). Without it, yarn install fails
-# part-way through the link step.
-sudo apt-get install -y --no-install-recommends \
-  build-essential curl git unzip ca-certificates jq python3
+# --- Command Line Tools ----------------------------------------------------
+if ! xcode-select -p >/dev/null 2>&1; then
+  echo "==> Installing Apple Command Line Tools"
+  echo "    A dialog will appear. Click 'Install' and wait for it to finish,"
+  echo "    then re-run this script."
+  xcode-select --install || true
+  exit 1
+fi
 
 # --- nvm + Node LTS --------------------------------------------------------
 if [[ ! -s "$HOME/.nvm/nvm.sh" ]]; then
@@ -61,29 +58,24 @@ fi
 export PATH="$HOME/.foundry/bin:$PATH"
 foundryup
 
-# --- GitHub CLI ------------------------------------------------------------
-if ! command -v gh >/dev/null 2>&1; then
-  echo "==> Installing GitHub CLI"
-  curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-    | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-  sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
-    | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
-  sudo apt-get update -y
-  sudo apt-get install -y gh
-fi
-
+# --- Verify (lightweight: skip gh which we don't install on macOS) ---------
 echo ""
 echo "==> Verifying toolchain"
-VERIFY_URL="${VERIFY_URL:-https://raw.githubusercontent.com/portdeveloper/se2-workshop-windows-setup/main/verify.sh}"
-if ! curl -fsSL "$VERIFY_URL" | bash -s -- --ci; then
-  echo ""
-  echo "Some toolchain checks failed. See setup.devnads.com for troubleshooting." >&2
+fail=0
+for cmd in git node yarn forge cast anvil; do
+  if command -v "$cmd" >/dev/null 2>&1; then
+    printf "  [OK]   %s\n" "$cmd"
+  else
+    printf "  [FAIL] %s\n" "$cmd"
+    fail=$((fail+1))
+  fi
+done
+if [[ $fail -gt 0 ]]; then
+  echo "$fail toolchain checks failed. See setup.devnads.com for troubleshooting." >&2
   exit 1
 fi
 
 # --- Git identity ----------------------------------------------------------
-# create-eth refuses to scaffold without one, so we set it before invoking.
 if [[ -z "$(git config --global user.name 2>/dev/null)" ]] || \
    [[ -z "$(git config --global user.email 2>/dev/null)" ]]; then
   echo ""
@@ -93,7 +85,6 @@ if [[ -z "$(git config --global user.name 2>/dev/null)" ]] || \
     GIT_EMAIL="$DEFAULT_GIT_EMAIL"
     echo "   (non-interactive: $GIT_NAME <$GIT_EMAIL>)"
   else
-    # Read from the user's terminal even though the script is piped from curl.
     read -r -p "   Name: " GIT_NAME </dev/tty
     read -r -p "   Email: " GIT_EMAIL </dev/tty
   fi
@@ -136,8 +127,7 @@ Three terminals from ~/$PROJECT_NAME:
 
 Open http://localhost:3000 in your browser.
 
-Optional, when you want to push code or deploy to Monad Testnet:
-   gh auth login
-   yarn deploy --network monadTestnet
+To deploy to Monad Testnet: get MON from the faucet linked in docs.monad.xyz,
+then yarn deploy --network monadTestnet.
 
 EOF
