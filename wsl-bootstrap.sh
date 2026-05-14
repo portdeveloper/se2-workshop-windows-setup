@@ -24,14 +24,19 @@ DEFAULT_GIT_EMAIL="${WORKSHOP_GIT_EMAIL:-workshop@example.com}"
 DEFAULT_PROJECT_NAME="${WORKSHOP_PROJECT_NAME:-my-monad-dapp}"
 EXTENSION="${WORKSHOP_EXTENSION:-portdeveloper/se2-monad-extension}"
 
+# Stops debconf from reading our STDIN (which is the curl pipe when invoked
+# as `curl ... | bash`). Without this, apt-get silently consumes script bytes
+# past its own point and the script exits early with no error message.
+export DEBIAN_FRONTEND=noninteractive
+
 # --- System packages -------------------------------------------------------
 echo "==> Installing apt packages (sudo password may be requested)"
-sudo apt-get update -y
+sudo -E apt-get update -y </dev/null
 # python3 is needed by node-gyp at install time (e.g. bufferutil, utf-8-validate
 # native addons pulled in transitively by ws). Without it, yarn install fails
 # part-way through the link step.
-sudo apt-get install -y --no-install-recommends \
-  build-essential curl git unzip ca-certificates jq python3
+sudo -E apt-get install -y --no-install-recommends \
+  build-essential curl git unzip ca-certificates jq python3 </dev/null
 
 # --- nvm + Node LTS --------------------------------------------------------
 if [[ ! -s "$HOME/.nvm/nvm.sh" ]]; then
@@ -69,8 +74,8 @@ if ! command -v gh >/dev/null 2>&1; then
   sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
     | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
-  sudo apt-get update -y
-  sudo apt-get install -y gh
+  sudo -E apt-get update -y </dev/null
+  sudo -E apt-get install -y gh </dev/null
 fi
 
 echo ""

@@ -66,7 +66,7 @@ Write-Host "  1. Reboot your machine."
 Write-Host "  2. After reboot, open 'Ubuntu' from the Start menu and create a Linux user."
 Write-Host "  3. Then paste this command into Ubuntu:" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "       curl -fsSL https://raw.githubusercontent.com/portdeveloper/se2-workshop-windows-setup/main/wsl-bootstrap.sh | bash" -ForegroundColor White
+Write-Host '       bash -c "$(curl -fsSL https://raw.githubusercontent.com/portdeveloper/se2-workshop-windows-setup/main/wsl-bootstrap.sh)"' -ForegroundColor White
 Write-Host ""
 Write-Host "  That installs the dev toolchain and scaffolds your project." -ForegroundColor Cyan
 Write-Host "  Full guide: https://setup.devnads.com" -ForegroundColor Cyan
