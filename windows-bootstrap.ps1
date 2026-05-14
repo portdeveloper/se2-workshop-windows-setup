@@ -35,7 +35,9 @@ $wslOk = $false
 try {
     $null = wsl --status 2>$null
     if ($LASTEXITCODE -eq 0) { $wslOk = $true }
-} catch {}
+} catch {
+    $wslOk = $false
+}
 
 if ($wslOk) {
     Write-Host "WSL is already present. Ensuring Ubuntu is installed..." -ForegroundColor Yellow
