@@ -66,11 +66,20 @@ if ! command -v gh >/dev/null 2>&1; then
 fi
 
 echo ""
-echo "==> Done."
+echo "==> Verifying install"
+VERIFY_URL="${VERIFY_URL:-https://raw.githubusercontent.com/portdeveloper/se2-workshop-windows-setup/main/verify.sh}"
+if curl -fsSL "$VERIFY_URL" | bash -s -- --ci; then
+  echo ""
+  echo "==> Done. You're ready for the workshop."
+else
+  echo ""
+  echo "Some toolchain checks failed. See setup.devnads.com for troubleshooting." >&2
+  exit 1
+fi
 echo ""
-echo "Now close this Ubuntu window and open a new one, then run:"
+echo "Next, close this window, reopen Ubuntu, then run:"
 echo "  git config --global user.name  \"Your Name\""
 echo "  git config --global user.email \"you@example.com\""
 echo "  gh auth login"
-echo "  npx create-eth@latest -e foundry my-dapp"
+echo "  npx create-eth@latest -e portdeveloper/se2-monad-extension my-monad-dapp"
 echo ""
