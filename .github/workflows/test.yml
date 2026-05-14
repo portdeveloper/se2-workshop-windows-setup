@@ -1,0 +1,44 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint-bash:
+    name: shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - run: shellcheck --severity=warning wsl-bootstrap.sh verify.sh
+
+  lint-powershell:
+    name: PSScriptAnalyzer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+          $results = Invoke-ScriptAnalyzer -Path windows-bootstrap.ps1 -Severity Warning,Error
+          $results | Format-Table
+          if ($results) { exit 1 }
+
+  test-container:
+    name: bootstrap + verify in container
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build test image
+        run: docker build -t se2-workshop-test test/
+      - name: Run wsl-bootstrap.sh + verify.sh --ci
+        run: |
+          docker run --rm \
+            -v "$PWD:/work:ro" -w /work \
+            se2-workshop-test \
+            bash -c "bash ./wsl-bootstrap.sh && bash ./verify.sh --ci"
