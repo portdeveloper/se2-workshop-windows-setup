@@ -19,13 +19,9 @@ This guide gets a Windows machine ready for a Scaffold-ETH 2 (Foundry flavor) wo
 ## Step 1 — Install WSL2 + Ubuntu (Windows side)
 
 1. Open **PowerShell as Administrator** (right-click Start → "Terminal (Admin)").
-2. Run:
+2. Run the verified-install one-liner from [setup.devnads.com](https://setup.devnads.com) — it pins to a commit hash and SHA-256-checks the downloaded script before running. The page is the authoritative source for the current pin + hash.
 
-   ```powershell
-   irm https://raw.githubusercontent.com/portdeveloper/se2-workshop-windows-setup/main/windows-bootstrap.ps1 | iex
-   ```
-
-   Or, if this repo is already cloned locally:
+   If you've already cloned this repo locally:
 
    ```powershell
    .\windows-bootstrap.ps1
@@ -41,13 +37,7 @@ If the one-liner ever fails, the fallback is `wsl --install -d Ubuntu` run as Ad
 ## Step 2 — Install dev toolchain (inside Ubuntu)
 
 1. Open **Ubuntu** from the Start menu.
-2. Run:
-
-   ```bash
-   curl -fsSL https://raw.githubusercontent.com/portdeveloper/se2-workshop-windows-setup/main/wsl-bootstrap.sh | bash
-   ```
-
-   This installs:
+2. Run the verified-install one-liner from [setup.devnads.com](https://setup.devnads.com). It downloads the script, checks SHA-256, then executes — copy-paste from the website to get the current pin + hash. This installs:
 
    - Build tools, `curl`, `git`, `unzip`
    - `nvm` + Node.js LTS
@@ -162,3 +152,23 @@ This spins up a clean Ubuntu 24.04 container and runs every step an attendee run
 If `make test-e2e` passes, every command in Steps 1–6 of the attendee README is known-working — including the create-eth extension, the Monad RPC config, and the Forge deploy. If it fails, the failing step is the same step an attendee would have failed on.
 
 The fast feedback loop is `make lint` (instant) → `make test-container` (~3 min, runs the bootstrap + verify only) → `make test-e2e` (full flow, slower). All three also run on GitHub Actions for every push.
+
+---
+
+## Security model
+
+The website's install one-liners aren't plain `curl | bash` / `irm | iex`. Each pins to a **specific commit hash** (not `main`) and embeds the **SHA-256** of the script at that commit. The one-liner downloads the script to a temp file, compares hashes, and only executes on match.
+
+That means:
+
+- A GitHub takeover, hostile fork, or compromised CDN can't ship modified content to attendees — the hash on the website wouldn't match the malicious script's hash.
+- Time-of-check / time-of-use is closed by pinning to a commit instead of `main` (which is mutable).
+- Each script change is a deliberate release: edit script → push → run `./tools/refresh-bootstrap-checksums.sh` → copy the printed `PINNED_REF` + SHAs into setup-devnads-com's `en.ts` and `tr.ts` dictionaries → push the website.
+
+To regenerate the values after editing any bootstrap script:
+
+```bash
+./tools/refresh-bootstrap-checksums.sh
+```
+
+The script refuses to run with a dirty tree (the pin would be a phantom commit nobody else can fetch).
