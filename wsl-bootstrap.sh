@@ -130,6 +130,15 @@ else
     --solidity-framework foundry
 fi
 
+# --- Open in VSCode --------------------------------------------------------
+# VSCode's WSL extension puts `code` on PATH; if it isn't there (no VSCode,
+# no WSL extension, headless run), just skip silently.
+if [[ "$NON_INTERACTIVE" != "1" ]] && command -v code >/dev/null 2>&1; then
+  echo ""
+  echo "==> Opening $PROJECT_NAME in VSCode"
+  code "$PROJECT_NAME" || true
+fi
+
 cat <<EOF
 
 ==> Ready to dev.
