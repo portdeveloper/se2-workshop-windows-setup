@@ -22,11 +22,15 @@ if ($build -lt 19041) {
     exit 1
 }
 
-# --- Check virtualization ---
+# --- Check virtualization (soft hint only) ---
+# Win32_Processor.VirtualizationFirmwareEnabled is known to misreport on
+# several configs — Hyper-V already enabled, certain AMD CPUs, post-fast-
+# restart firmware state. Don't shout when it returns false; just nudge.
 $cpu = Get-CimInstance Win32_Processor
 if (-not $cpu.VirtualizationFirmwareEnabled) {
-    Write-Host "WARNING: hardware virtualization appears disabled in BIOS." -ForegroundColor Yellow
-    Write-Host "WSL2 needs Intel VT-x or AMD-V. Enable it in BIOS/UEFI if installation fails."
+    Write-Host "Note: couldn't confirm hardware virtualization is enabled." -ForegroundColor DarkGray
+    Write-Host "      This flag misreports on some systems. Continuing anyway." -ForegroundColor DarkGray
+    Write-Host "      If WSL fails to install, enable VT-x (Intel) or AMD-V / SVM (AMD) in BIOS/UEFI." -ForegroundColor DarkGray
     Write-Host ""
 }
 
