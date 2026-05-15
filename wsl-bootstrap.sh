@@ -143,15 +143,11 @@ cat <<EOF
 
 ==> Ready to dev.
 
-Three terminals from ~/$PROJECT_NAME:
-   yarn chain      # terminal 1 (local Anvil)
-   yarn deploy     # terminal 2
-   yarn start      # terminal 3 (http://localhost:3000)
+Continue in the new VSCode window that just opened — its terminal will
+have node, yarn, and foundry on PATH. This terminal does NOT (nvm and
+foundry only register themselves in fresh interactive shells); if you
+want to keep using it, run \`exec bash\` first or open a new tab.
 
-Open http://localhost:3000 in your browser.
-
-Optional, when you want to push code or deploy to Monad Testnet:
-   gh auth login
-   yarn deploy --network monadTestnet
+Next steps live at https://setup.devnads.com.
 
 EOF
